@@ -4,30 +4,27 @@ const {getUser} = require("../services/auth");
    and by that uid it get the user if it gets user it will 
    pass the flow the next otherwie to the login page.
 */
-async function restrictToLoggedinUserOnly(req,res,next){
 
-    const userUid = await req.cookies?.uid;
-    
+function checkForAuthentication(req,res,next){
+    const authenticationToken = req.cookies?.uid;
 
-    if(!userUid) return res.redirect("/login");
+    req.user = null;
 
-    const user =  getUser(userUid);
-    
-    if(!user) return res.redirect("/login");
+    if(!authenticationToken) return next();
 
+    const user = getUser(authenticationToken);
     req.user = user;
-    next();
+    return next();
 }
-//It checkauth for the user and passes the user data 
-async function checkAuth(req,res,next){
-
-    const userUid = await req.cookies?.uid;
-    const user =  getUser(userUid);
-    req.user = user;
-    next();
+function restrictTo(roles = []){
+    return function(req,res,next){
+        if(!req.user) return res.redirect("/login");
+        if(!roles.includes(req.user.role)) return res.end("Unauthorized User");
+        return next();
+    };
 }
 
 module.exports = {
-    restrictToLoggedinUserOnly,
-    checkAuth
+    checkForAuthentication,
+    restrictTo
 }

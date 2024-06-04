@@ -5,7 +5,7 @@ const urlRoute = require('./routes/url');
 const userRoute = require("./routes/user");
 const URL = require(".//models/url");
 const cookieParser = require("cookie-parser")
-const {restrictToLoggedinUserOnly,checkAuth} = require("./midllewares/auth")
+const {checkForAuthentication,restrictTo} = require("./midllewares/auth")
 const path = require("path")
 const PORT = 8001;
 const staticRoute = require("./routes/staticRouter");
@@ -19,10 +19,12 @@ app.set("views", path.resolve("./views")); // this will give the path of the fil
 app.use(express.json());
 app.use(express.urlencoded({extended:false}));
 app.use(cookieParser());
+app.use(checkForAuthentication);
 
-app.use("/url",restrictToLoggedinUserOnly,urlRoute);
+
+app.use("/url",restrictTo(["NORMAL"]),urlRoute);
 app.use("/user",userRoute);
-app.use("/",checkAuth,staticRoute);
+app.use("/",staticRoute);
 
 app.get('/url/:shortId',async(req,res)=>{
     const shortId = req.params.shortId;
